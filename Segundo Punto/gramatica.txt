@@ -1,0 +1,13 @@
+Program       -> StmtList
+StmtList      -> Stmt StmtList | ε
+Stmt         -> ExprStmt ';'
+ExprStmt     -> Expr
+
+Expr         -> MatrixLiteral
+              | DOT '(' Expr ',' Expr ')'      // operación dot
+
+MatrixLiteral -> '[' RowList ']'              // e.g. [[1,2],[3,4]]
+RowList      -> Row ',' RowList | Row
+Row          -> '[' NumList ']'               // [1, 2, 3]
+NumList      -> ExprElem ',' NumList | ExprElem
+ExprElem     -> NUMBER | '-' NUMBER          // permitimos números enteros/float
