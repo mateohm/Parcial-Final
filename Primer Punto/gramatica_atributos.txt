@@ -1,0 +1,126 @@
+function generarGramáticaSQL():
+    G = nuevaGramática()
+
+    # Atributos comunes
+    Atributo("cod")  # código generado
+    Atributo("tabla")
+    Atributo("campos")
+    Atributo("cond")
+
+    # --- PRODUCCIONES PRINCIPALES ---
+
+    G.add("S → Sentencia { S.cod = Sentencia.cod }")
+
+    G.add("""
+    Sentencia → Select
+              | Insert
+              | Update
+              | Delete
+    { Sentencia.cod = Sentencia.hijo.cod }
+    """)
+
+    # --- SELECT ---
+    G.add("""
+    Select → SELECT Campos FROM ID Condicion
+    {
+        Select.cod = "SELECT " + Campos.cod +
+                     " FROM " + ID.lexema +
+                     Condicion.cod
+    }
+    """)
+
+    G.add("""
+    Campos → CampoLista
+    { Campos.cod = CampoLista.cod }
+    """)
+
+    G.add("""
+    CampoLista → ID CampoLista'
+    {
+        CampoLista.cod = ID.lexema + CampoLista'.cod
+    }
+    """)
+
+    G.add("""
+    CampoLista' → , ID CampoLista'
+                 | ε
+    {
+        CampoLista'.cod =
+            ("," + ID.lexema + CampoLista'.cod) si hay coma
+            else ""
+    }
+    """)
+
+    G.add("""
+    Condicion → WHERE Expr
+               | ε
+    {
+        Condicion.cod =
+            " WHERE " + Expr.cod    si hay WHERE
+            else ""
+    }
+    """)
+
+    # --- INSERT ---
+    G.add("""
+    Insert → INSERT INTO ID (Campos) VALUES (Valores)
+    {
+        Insert.cod = "INSERT INTO " + ID.lexema +
+                     "(" + Campos.cod + ")" +
+                     " VALUES (" + Valores.cod + ")"
+    }
+    """)
+
+    G.add("""
+    Valores → ValorLista
+    { Valores.cod = ValorLista.cod }
+    """)
+
+    G.add("""
+    ValorLista → VALOR ValorLista'
+    {
+        ValorLista.cod = VALOR.lexema + ValorLista'.cod
+    }
+    """)
+
+    G.add("""
+    ValorLista' → , VALOR ValorLista'
+                | ε
+    { igual que la lista de campos }
+    """)
+
+    # --- UPDATE ---
+    G.add("""
+    Update → UPDATE ID SET Asignaciones Condicion
+    {
+        Update.cod = "UPDATE " + ID.lexema +
+                     " SET " + Asignaciones.cod +
+                     Condicion.cod
+    }
+    """)
+
+    G.add("""
+    Asignaciones → Asig Asignaciones'
+    { Asignaciones.cod = Asig.cod + Asignaciones'.cod }
+    """)
+
+    G.add("""
+    Asignaciones' → , Asig Asignaciones'
+                   | ε
+    """)
+
+    G.add("""
+    Asig → ID = VALOR
+    { Asig.cod = ID.lexema + "=" + VALOR.lexema }
+    """)
+
+    # --- DELETE ---
+    G.add("""
+    Delete → DELETE FROM ID Condicion
+    {
+        Delete.cod = "DELETE FROM " + ID.lexema +
+                     Condicion.cod
+    }
+    """)
+
+    return G
